@@ -1,0 +1,1927 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Image Filter App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 50px;
+        }
+
+        #output-container {
+            margin-top: 20px;
+        }
+
+        img {
+            max-width: 100%;
+            max-height: 400px;
+        }
+    </style>
+</head>
+<body>
+    <h1>Image Filter App</h1>
+    
+    <input type="file" id="imageInput" accept="image/*" onchange="loadImage()">
+    
+    <label for="filterCategorySelect">Select a Filter Category:</label>
+    <select id="filterCategorySelect" onchange="populateFilterOptions()">
+        <option value="smoothing">Choose Filter</option>
+        <option value="smoothing">Smoothing Filters</option>
+        <option value="edgeDetection">Edge Detection Filters</option>
+        <option value="gradient">Gradient Filters</option>
+        <option value="thresholding">Thresholding Filters</option>
+        <option value="morphological">Morphological Filters</option>
+        <option value="colorConversion">Color Space Conversion Filters</option>
+        <option value="histogram">Histogram Filters</option>
+        <option value="convolution">Filtering and Convolution Filters</option>
+        <option value="contourDetection">Contour Detection Filters</option>
+        <option value="featureDetection">Feature Detection Filters</option>
+        <option value="houghTransform">Hough Transform Filters</option>
+        <option value="blobDetection">Blob Detection Filters</option>
+        <option value="texture">Texture Filters</option>
+        <option value="noiseReduction">Noise Reduction Filters</option>
+        <option value="imageRegistration">Image Registration Filters</option>
+        <option value="augmentation">Augmentation Filters</option>
+        <option value="frequencyDomain">Frequency Domain Filters</option>
+        <option value="segmentation">Segmentation Filters</option>
+        <option value="imageEnhancement">Image Enhancement Filters</option>
+        <option value="superpixel">Superpixel Filters</option>
+        <option value="nonPhotorealisticRendering">Non-Photorealistic Rendering Filters</option>
+        <option value="cornerDetection">Corner Detection Filters</option>
+        <option value="affineTransformation">Affine Transformation Filters</option>
+        <option value="homography">Homography Filters</option>
+        <option value="frequencyDomain2">Filtering in Frequency Domain Filters</option>
+        <option value="medicalImage">Medical Image Filters</option>
+        <option value="motionDetection">Motion Detection Filters</option>
+        <option value="imageCompression">Image Compression Filters</option>
+        <option value="panoramaStitching">Panorama Stitching Filters</option>
+        <option value="imageAlignment">Image Alignment Filters</option>
+        <option value="biometric">Biometric Filters</option>
+        <option value="imageAnnotation">Image Annotation Filters</option>
+        <option value="imageSegmentation">Image Segmentation Filters</option>
+        <option value="imageRegistration2">Image Registration Filters</option>
+        <option value="videoAnalysis">Video Analysis Filters</option>
+        <option value="imageFilteringAR">Image Filtering for Augmented Reality Filters</option>
+        <option value="depthEstimation">Depth Estimation Filters</option>
+        <option value="colorTransfer">Color Transfer Filters</option>
+        <option value="imageFusion">Image Fusion Filters</option>
+        <option value="imageSynthesis">Image Synthesis Filters</option>
+    </select>
+
+    <label for="filterSelect">Select a Filter:</label>
+    <select id="filterSelect" onchange="applySelectedFilter()">
+        <!-- Options will be populated dynamically -->
+    </select>
+
+    <label for="resolutionSelect">Select Resolution:</label>
+    <select id="resolutionSelect" onchange="applySelectedFilter()">
+        <option value="original">Original Size</option>
+        <option value="thumbnail">Thumbnail (100x100)</option>
+        <option value="small">Small (300x300)</option>
+        <option value="medium">Medium (600x600)</option>
+        <option value="large">Large (900x900)</option>
+        <option value="custom">Custom</option>
+    </select>
+
+    <div id="customResolution" style="display:none;">
+        <label for="customWidth">Width:</label>
+        <input type="number" id="customWidth" placeholder="Enter width">
+        
+        <label for="customHeight">Height:</label>
+        <input type="number" id="customHeight" placeholder="Enter height">
+    </div>
+
+    <button style="display: none; margin-left: 670px; margin-top: 15px;" id="customApplyFilterButton" onclick="applyCustomFilter()">Apply Custom Filters</button>
+
+    <div id="output-container">
+        <h2>Original Image</h2>
+        <img id="originalImage" alt="Original Image">
+        
+        <h2>Filtered Image</h2>
+        <img id="filteredImage" alt="Filtered Image">
+    </div>
+
+    <button onclick="downloadImage()">Download Filtered Image</button>
+
+    <script>
+        let originalImageData;
+        let img; // Declare img globally
+
+        function loadImage() {
+            var input = document.getElementById('imageInput');
+            var originalImage = document.getElementById('originalImage');
+            var filteredImage = document.getElementById('filteredImage');
+
+            var file = input.files[0];
+            var reader = new FileReader();
+
+            reader.onload = function(e) {
+                originalImage.src = e.target.result;
+                originalImageData = e.target.result;
+
+                // Create a new Image object
+                img = new Image();
+
+                // Set the onload handler for the new Image object
+                img.onload = function() {
+                    applySelectedFilter(); // Call applySelectedFilter after the image is fully loaded
+                };
+
+                // Set the src attribute of the new Image object
+                img.src = originalImageData;
+            };
+
+            reader.readAsDataURL(file);
+        }
+
+
+        function populateFilterOptions() {
+            var filterCategorySelect = document.getElementById('filterCategorySelect');
+            var filterSelect = document.getElementById('filterSelect');
+            var selectedCategory = filterCategorySelect.value;
+
+            // Clear previous options
+            filterSelect.innerHTML = '';
+
+            // Add options based on the selected category
+            switch (selectedCategory) {
+                case 'smoothing':
+                    addFilterOptions(['Gaussian Blur', 'Median Blur', 'Bilateral Filter', 'Box Filter']);
+                    break;
+                case 'edgeDetection':
+                    addFilterOptions(['Canny Edge Detection', 'Sobel Operator', 'Scharr Filter', 'Laplacian']);
+                    break;
+                case 'gradient':
+                    addFilterOptions(['Roberts Cross Operator', 'Prewitt Operator', 'Kirsh Operator']);
+                    break;
+                case 'thresholding':
+                    addFilterOptions(['Binary Thresholding', 'Adaptive Thresholding', "Otsu's Thresholding"]);
+                    break;
+                case 'morphological':
+                    addFilterOptions(['Erosion', 'Dilation', 'Opening', 'Closing', 'Morphological Gradient']);
+                    break;
+                case 'colorConversion':
+                    addFilterOptions(['BGR to Grayscale', 'BGR to HSV', 'BGR to LAB', 'BGR to XYZ', 'Grayscale to Binary']);
+                    break;
+                case 'histogram':
+                    addFilterOptions(['Histogram Equalization', 'Histogram Matching']);
+                    break;
+                case 'convolution':
+                    addFilterOptions(['Custom Convolution', 'Separable Filters', 'Laplacian of Gaussian (LoG)']);
+                    break;
+                case 'contourDetection':
+                    addFilterOptions(['Contour Detection', 'Convex Hull']);
+                    break;
+                case 'featureDetection':
+                    addFilterOptions(['ORB (Oriented FAST and Rotated BRIEF)', 'SIFT (Scale-Invariant Feature Transform)', 'SURF (Speeded-Up Robust Features)']);
+                    break;
+                case 'houghTransform':
+                    addFilterOptions(['Hough Line Transform', 'Hough Circle Transform']);
+                    break;
+                case 'blobDetection':
+                    addFilterOptions(['SimpleBlobDetector', 'MSER (Maximally Stable Extremal Regions)']);
+                    break;
+                case 'texture':
+                    addFilterOptions(['Gabor Filter', 'Local Binary Pattern (LBP)']);
+                    break;
+                case 'noiseReduction':
+                    addFilterOptions(['Non-Local Means Denoising', 'Total Variation Denoising']);
+                    break;
+                case 'imageRegistration':
+                    addFilterOptions(['Image Alignment Filters', 'Feature Matching']);
+                    break;
+
+
+
+
+
+
+
+
+                case 'augmentation':
+                    addFilterOptions(['Rotation', 'Scaling', 'Flipping']);
+                    break;
+                case 'frequencyDomain':
+                    addFilterOptions(['Fourier Transform', 'Butterworth Filter', 'Homomorphic Filtering']);
+                    break;
+                case 'segmentation':
+                    addFilterOptions(['Watershed Segmentation', 'Mean-Shift Segmentation']);
+                    break;
+                case 'imageEnhancement':
+                    addFilterOptions(['Contrast Stretching', 'Gamma Correction']);
+                    break;
+                case 'superpixel':
+                    addFilterOptions(['SLIC (Simple Linear Iterative Clustering)']);
+                    break;
+                case 'nonPhotorealisticRendering':
+                    addFilterOptions(['Bilateral Texture Filter', 'Kuwahara Filter', 'Mean Shift Filter']);
+                    break;
+                case 'cornerDetection':
+                    addFilterOptions(['Harris Corner Detector', 'Shi-Tomasi Corner Detector']);
+                    break;
+                case 'affineTransformation':
+                    addFilterOptions(['Affine Transform', 'Warp Perspective']);
+                    break;
+                case 'homography':
+                    addFilterOptions(['FindHomography', 'WarpAffine']);
+                    break;
+                case 'frequencyDomain2':
+                    addFilterOptions(['High-pass Filter', 'Low-pass Filter']);
+                    break;
+                case 'medicalImage':
+                    addFilterOptions(['DICOM Image Processing', 'CT Image Filtering']);
+                    break;
+                case 'motionDetection':
+                    addFilterOptions(['Optical Flow (Lucas-Kanade)', 'Dense Optical Flow']);
+                    break;
+                case 'imageCompression':
+                    addFilterOptions(['JPEG Compression', 'PNG Compression']);
+                    break;
+                case 'panoramaStitching':
+                    addFilterOptions(['Feature Matching for Stitching', 'Stitching Using Homography']);
+                    break;
+                case 'imageAlignment':
+                    addFilterOptions(['RANSAC (Random Sample Consensus)', 'Image Alignment with Feature Matching']);
+                    break;
+                case 'biometric':
+                    addFilterOptions(['Facial Recognition Filters', 'Iris Recognition Filters']);
+                    break;
+                case 'imageAnnotation':
+                    addFilterOptions(['Drawing Shapes and Text on Images', 'Contour Approximation']);
+                    break;
+                case 'imageSegmentation':
+                    addFilterOptions(['GrabCut Segmentation', "Felzenszwalb's Graph-Based Segmentation"]);
+                    break;
+                case 'imageRegistration2':
+                    addFilterOptions(['Elastic Deformation', 'Thin-Plate Spline Transformation']);
+                    break;
+                case 'videoAnalysis':
+                    addFilterOptions(['Background Subtraction', 'Video Stabilization']);
+                    break;
+                case 'imageFilteringAR':
+                    addFilterOptions(['Marker-based AR Filters', 'Homography for AR']);
+                    break;
+                case 'depthEstimation':
+                    addFilterOptions(['Stereo Vision', 'Disparity Map Calculation']);
+                    break;
+                case 'colorTransfer':
+                    addFilterOptions(['Color Transfer between Images', 'Color Histogram Matching']);
+                    break;
+                case 'imageFusion':
+                    addFilterOptions(['Multi-Sensor Image Fusion', 'Laplacian Pyramid Blending']);
+                    break;
+                case 'imageSynthesis':
+                    addFilterOptions(['Perlin Noise Generation', 'Procedural Texture Synthesis']);
+                    break;
+            }
+        }
+
+        function addFilterOptions(options) {
+            var filterSelect = document.getElementById('filterSelect');
+            options.forEach(function(option) {
+                var optionElement = document.createElement('option');
+                optionElement.value = option.toLowerCase().replace(/ /g, '_');
+                optionElement.textContent = option;
+                filterSelect.appendChild(optionElement);
+            });
+        }
+        function applyCustomFilter() {
+            var filterSelect = document.getElementById('filterSelect');
+            var selectedFilter = filterSelect.value;
+            var resolutionSelect = document.getElementById('resolutionSelect');
+            var selectedResolution = resolutionSelect.value;
+            var filteredImage = document.getElementById('filteredImage');
+
+            // Get custom resolution values
+            var customWidth = document.getElementById('customWidth').value;
+            var customHeight = document.getElementById('customHeight').value;
+
+            if (selectedFilter === 'original') {
+                filteredImage.src = originalImageData;
+            } else {
+                // Apply the selected filter
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+
+            img = new Image(); // Declare img here
+                img.onload = function() {
+                    var targetWidth, targetHeight;
+
+                    switch (selectedResolution) {
+                        case 'custom':
+                            targetWidth = customWidth;  // Use custom width
+                            targetHeight = customHeight;  // Use custom height
+                            break;
+                        default:
+                            targetWidth = img.width;
+                            targetHeight = img.height;
+                    }
+
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+
+                    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                    applyFilter(selectedFilter, ctx);
+                    filteredImage.src = canvas.toDataURL('image/jpeg');
+                };
+
+                img.src = originalImageData;
+        }
+    }
+
+        function applySelectedFilter() {
+            var filterSelect = document.getElementById('filterSelect');
+            var selectedFilter = filterSelect.value;
+            var resolutionSelect = document.getElementById('resolutionSelect');
+            var selectedResolution = resolutionSelect.value;
+            var filteredImage = document.getElementById('filteredImage');
+            var customButton = document.getElementById('customApplyFilterButton');
+                
+            if(selectedResolution === "custom"){
+                customButton.style.display = 'block'
+            }else{
+                customButton.style.display = 'none'
+            }
+
+            if (selectedFilter === 'original') {
+                filteredImage.src = originalImageData;
+            } else {
+                // Apply the selected filter
+                var canvas = document.createElement('canvas');
+                var ctx = canvas.getContext('2d');
+
+                img = new Image(); // Declare img here
+                img.onload = function() {
+                    var targetWidth, targetHeight;
+
+                    switch (selectedResolution) {
+                        case 'original':
+                            targetWidth = img.width;
+                            targetHeight = img.height;
+                            break;
+                        case 'thumbnail':
+                            targetWidth = 100;
+                            targetHeight = 100;
+                            break;
+                        case 'small':
+                            targetWidth = 300;
+                            targetHeight = 300;
+                            break;
+                        case 'medium':
+                            targetWidth = 600;
+                            targetHeight = 600;
+                            break;
+                        case 'large':
+                            targetWidth = 900;
+                            targetHeight = 900;
+                            break;
+                        case 'custom':
+                            targetWidth = img.width;
+                            targetHeight = img.height;  // Use custom height
+                            break;
+                        default:
+                            targetWidth = img.width;
+                            targetHeight = img.height;
+                    }
+
+                    canvas.width = targetWidth;
+                    canvas.height = targetHeight;
+
+                    ctx.drawImage(img, 0, 0, targetWidth, targetHeight);
+
+                    applyFilter(selectedFilter, ctx);
+
+                    // Display the filtered image
+                    filteredImage.src = canvas.toDataURL('image/jpeg');
+                };
+
+                img.src = originalImageData;
+            }
+        }
+
+        function applyFilter(filter, ctx) {
+            switch (filter) {
+                case 'gaussian_blur':
+                    ctx.filter = 'blur(10px)';  // Adjust the blur radius as needed
+                    ctx.drawImage(img, 0, 0, img.width, img.height);
+                    break;
+                case 'median_blur':
+                    // Apply Median Blur filter logic
+                    var imageData = ctx.getImageData(0, 0, img.width, img.height);
+                    var data = imageData.data;
+
+                    for (var i = 0; i < data.length; i += 4) {
+                        var neighborhood = [];
+                        for (var x = -1; x <= 1; x++) {
+                            for (var y = -1; y <= 1; y++) {
+                                var pixelIndex = i + (x + y * img.width) * 4;
+                                if (pixelIndex >= 0 && pixelIndex < data.length) {
+                                    neighborhood.push(data[pixelIndex]);
+                                }
+                            }
+                        }
+                        neighborhood.sort();
+                        var medianIndex = Math.floor(neighborhood.length / 2);
+                        data[i] = data[i + 1] = data[i + 2] = neighborhood[medianIndex];
+                    }
+
+                    ctx.putImageData(imageData, 0, 0);
+                    break;
+                case 'box_filter':
+                    var boxFilterResult = applyBoxFilter(ctx, img);
+                    ctx.putImageData(boxFilterResult, 0, 0);
+                    break;
+                case 'bilateral_filter':
+                    var bilateralFilterResult = applyBilateralFilter(ctx, img);
+                    ctx.putImageData(bilateralFilterResult, 0, 0);
+                    break;
+                case 'canny_edge_detection':
+                    var cannyEdgeResult = applyCannyEdgeDetection(ctx, img);
+                    ctx.putImageData(cannyEdgeResult, 0, 0);
+                    break;
+                case 'sobel_operator':
+                    var sobelResult = applySobelOperator(ctx, img);
+                    ctx.putImageData(sobelResult, 0, 0);
+                    break;
+                case 'scharr_filter':
+                    var scharrResult = applyScharrFilter(ctx, img);
+                    ctx.putImageData(scharrResult, 0, 0);
+                    break;
+                case 'laplacian':
+                    var laplacianResult = applyLaplacian(ctx, img);
+                    ctx.putImageData(laplacianResult, 0, 0);
+                    break;
+                case 'sobel_operator':
+                    var sobelResult = applySobelOperator(ctx, img);
+                    ctx.putImageData(sobelResult, 0, 0);
+                    break;
+                case 'scharr_filter':
+                    var scharrResult = applyScharrFilter(ctx, img);
+                    ctx.putImageData(scharrResult, 0, 0);
+                    break;
+                case 'laplacian':
+                    var laplacianResult = applyLaplacian(ctx, img);
+                    ctx.putImageData(laplacianResult, 0, 0);
+                    break;
+                case 'binary_thresholding':
+                    var binaryThresholdResult = applyBinaryThresholding(ctx, img);
+                    ctx.putImageData(binaryThresholdResult, 0, 0);
+                    break;
+                case 'adaptive_thresholding':
+                    var adaptiveThresholdResult = applyAdaptiveThresholding(ctx, img);
+                    ctx.putImageData(adaptiveThresholdResult, 0, 0);
+                    break;
+                case 'otsu_thresholding':
+                    var otsuThresholdResult = applyOtsuThresholding(ctx, img);
+                    ctx.putImageData(otsuThresholdResult, 0, 0);
+                    break;
+                case 'erosion':
+                    var erosionResult = applyErosion(ctx, img);
+                    ctx.putImageData(erosionResult, 0, 0);
+                    break;
+                case 'dilation':
+                    var dilationResult = applyDilation(ctx, img);
+                    ctx.putImageData(dilationResult, 0, 0);
+                    break;
+                case 'opening':
+                    var openingResult = applyOpening(ctx, img);
+                    ctx.putImageData(openingResult, 0, 0);
+                    break;
+                case 'closing':
+                    var closingResult = applyClosing(ctx, img);
+                    ctx.putImageData(closingResult, 0, 0);
+                    break;
+                case 'morphological_gradient':
+                    var morphologicalGradientResult = applyMorphologicalGradient(ctx, img);
+                    ctx.putImageData(morphologicalGradientResult, 0, 0);
+                    break;               
+                case 'bgr_to_grayscale':
+                    var grayscaleResult = applyBGRtoGrayscale(ctx, img);
+                    ctx.putImageData(grayscaleResult, 0, 0);
+                    break;
+                case 'bgr_to_hsv':
+                    var hsvResult = applyBGRtoHSV(ctx, img);
+                    ctx.putImageData(hsvResult, 0, 0);
+                    break;
+                case 'bgr_to_lab':
+                    var labResult = applyBGRtoLAB(ctx, img);
+                    ctx.putImageData(labResult, 0, 0);
+                    break;
+                case 'bgr_to_xyz':
+                    var xyzResult = applyBGRtoXYZ(ctx, img);
+                    ctx.putImageData(xyzResult, 0, 0);
+                    break;
+                case 'grayscale_to_binary':
+                    var binaryResult = applyGrayscaleToBinary(ctx, img);
+                    ctx.putImageData(binaryResult, 0, 0);
+                    break;              
+                case 'histogram_equalization':
+                    applyHistogramEqualization(ctx, img);
+                    break;
+                case 'histogram_matching':
+                    applyHistogramMatching(ctx, img);
+                    break;
+                case 'custom_convolution':
+                    applyCustomConvolution(ctx, img);
+                    break;
+                case 'separable_filters':
+                    applySeparableFilters(ctx, img);
+                    break;
+                case 'laplacian_of_gaussian':
+                    applyLaplacianOfGaussian(ctx, img);
+                    break;
+                case 'contour_detection':
+                    var contourResult = applyContourDetection(ctx, img);
+                    ctx.putImageData(contourResult, 0, 0);
+                    break;
+                case 'convex_hull':
+                    var convexHullResult = applyConvexHull(ctx, img);
+                    ctx.putImageData(convexHullResult, 0, 0);
+                    break;
+                case 'orb_feature_detection':
+                    applyORBFeatureDetection(ctx, img);
+                    break;
+                case 'sift_feature_detection':
+                    applySIFTFeatureDetection(ctx, img);
+                    break;
+                case 'surf_feature_detection':
+                    applySURFFeatureDetection(ctx, img);
+                    break;
+                case 'houghLineTransform':
+                    applyHoughLineTransform(ctx, img);
+                    break;
+                case 'houghCircleTransform':
+                    applyHoughCircleTransform(ctx, img);
+                    break;
+                case 'simpleBlobDetector':
+                    applySimpleBlobDetector(ctx, img);
+                    break;
+                case 'mser':
+                    applyMSERBlobDetection(ctx, img);
+                    break;
+                case 'gaborFilter':
+                    applyGaborFilter(ctx, img);
+                    break;
+                case 'localBinaryPattern':
+                    applyLocalBinaryPattern(ctx, img);
+                    break;
+                case 'nonLocalMeansDenoising':
+                    applyNonLocalMeansDenoising(ctx, img);
+                    break;
+                case 'totalVariationDenoising':
+                    applyTotalVariationDenoising(ctx, img);
+                    break;
+                case 'imageAlignmentFilters':
+                    applyImageAlignmentFilters(ctx, img);
+                    break;
+                case 'featureMatching':
+                    applyFeatureMatching(ctx, img);
+                    break;
+                
+                }
+        }
+
+        
+        // Function to apply Feature Matching
+        function applyFeatureMatching(ctx, img) {
+            // Feature detection and matching logic
+            // Example: Using SIFT for feature detection and matching
+            var sift = new SIFT(); // Assuming SIFT is available in your environment
+            var keypoints = sift.detect(img);
+            var descriptors = sift.compute(img, keypoints);
+            var matches = sift.match(descriptors);
+
+            // Draw matches on the canvas (optional)
+            ctx.strokeStyle = 'red';
+            for (var i = 0; i < matches.length; i++) {
+                var match = matches[i];
+                ctx.beginPath();
+                ctx.moveTo(keypoints[match.queryIdx].x, keypoints[match.queryIdx].y);
+                ctx.lineTo(keypoints[match.trainIdx].x, keypoints[match.trainIdx].y);
+                ctx.stroke();
+            }
+
+            console.log("Feature matching applied successfully.");
+        }
+
+        // Function to apply Image Alignment Filters
+        function applyImageAlignmentFilters(ctx, img) {
+            // Image alignment filters logic
+            // Example: Using affine transformation for alignment
+            var transformationMatrix = computeAffineTransformation(img);
+            var alignedImage = applyTransformation(img, transformationMatrix);
+
+            // Draw aligned image on the canvas (optional)
+            ctx.drawImage(alignedImage, 0, 0);
+
+            console.log("Image alignment filters applied successfully.");
+        }
+        // Function to apply Non-Local Means Denoising
+        function applyNonLocalMeansDenoising(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+            var newData = new Uint8ClampedArray(data.length);
+
+            // Define parameters such as patch size, search window size, and strength of filtering
+            var patchSize = 3; // Size of the patch
+            var searchWindowSize = 7; // Size of the search window
+            var h = 10; // Strength of filtering
+
+            // Loop through each pixel in the image
+            for (var i = 0; i < img.height; i++) {
+                for (var j = 0; j < img.width; j++) {
+                    var centerPixelIndex = (i * img.width + j) * 4;
+                    var centerPixel = [data[centerPixelIndex], data[centerPixelIndex + 1], data[centerPixelIndex + 2]];
+
+                    // Initialize total weight and sum of intensity values
+                    var totalWeight = 0;
+                    var sumIntensity = [0, 0, 0];
+
+                    // Loop through the search window
+                    for (var m = -searchWindowSize; m <= searchWindowSize; m++) {
+                        for (var n = -searchWindowSize; n <= searchWindowSize; n++) {
+                            var neighborI = Math.min(Math.max(i + m, 0), img.height - 1);
+                            var neighborJ = Math.min(Math.max(j + n, 0), img.width - 1);
+                            var neighborPixelIndex = (neighborI * img.width + neighborJ) * 4;
+                            var neighborPixel = [data[neighborPixelIndex], data[neighborPixelIndex + 1], data[neighborPixelIndex + 2]];
+
+                            // Calculate Gaussian weight
+                            var weight = Math.exp(-(m * m + n * n) / (2 * patchSize * patchSize));
+
+                            // Accumulate weighted intensity values
+                            sumIntensity[0] += weight * neighborPixel[0];
+                            sumIntensity[1] += weight * neighborPixel[1];
+                            sumIntensity[2] += weight * neighborPixel[2];
+
+                            // Accumulate total weight
+                            totalWeight += weight;
+                        }
+                    }
+
+                    // Normalize intensity values
+                    newData[centerPixelIndex] = sumIntensity[0] / totalWeight;
+                    newData[centerPixelIndex + 1] = sumIntensity[1] / totalWeight;
+                    newData[centerPixelIndex + 2] = sumIntensity[2] / totalWeight;
+                    newData[centerPixelIndex + 3] = data[centerPixelIndex + 3]; // Alpha channel remains unchanged
+                }
+            }
+
+            // Create new image data with denoised pixel values
+            var denoisedImageData = new ImageData(newData, img.width, img.height);
+
+            // Put the denoised image data onto the canvas
+            ctx.putImageData(denoisedImageData, 0, 0);
+        }
+
+        // Function to apply Total Variation Denoising
+        function applyTotalVariationDenoising(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+
+            // Define parameters such as regularization parameter and number of iterations
+            var lambda = 0.2; // Regularization parameter
+            var numIterations = 10; // Number of iterations
+
+            // Loop through each pixel in the image
+            for (var iter = 0; iter < numIterations; iter++) {
+                // Clone the original image data
+                var newData = new Uint8ClampedArray(data);
+
+                // Update pixel values using total variation denoising algorithm
+                for (var i = 1; i < img.height - 1; i++) {
+                    for (var j = 1; j < img.width - 1; j++) {
+                        var pixelIndex = (i * img.width + j) * 4;
+
+                        // Calculate gradient
+                        var gradX = (data[pixelIndex + 4] - data[pixelIndex]) / 255;
+                        var gradY = (data[pixelIndex + img.width * 4] - data[pixelIndex]) / 255;
+
+                        // Calculate divergence
+                        var div = (gradX - (data[pixelIndex] - data[pixelIndex - 4]) / 255) +
+                                (gradY - (data[pixelIndex] - data[pixelIndex - img.width * 4]) / 255);
+
+                        // Update pixel value
+                        newData[pixelIndex] += lambda * div;
+                        newData[pixelIndex + 1] += lambda * div;
+                        newData[pixelIndex + 2] += lambda * div;
+                    }
+                }
+
+                // Update image data with the new pixel values
+                for (var k = 0; k < newData.length; k++) {
+                    data[k] = newData[k];
+                }
+            }
+
+            // Put the denoised image data onto the canvas
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Function to apply Gabor Filter
+        function applyGaborFilter(ctx, img) {
+            // Implementation for Gabor Filter
+            // Example implementation using HTML canvas filters
+            ctx.filter = 'url(#gaborFilter)';
+            ctx.drawImage(img, 0, 0, img.width, img.height);
+        }
+
+        // Function to apply Local Binary Pattern (LBP)
+        function applyLocalBinaryPattern(ctx, img) {
+            // Implementation for Local Binary Pattern (LBP)
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+            var lbpImageData = ctx.createImageData(img.width, img.height);
+
+            // Example implementation of LBP algorithm
+            for (var i = 0; i < data.length; i += 4) {
+                // Get the pixel value and its neighbors
+                var center = data[i];
+                var neighbors = [];
+                neighbors.push(data[i - 4]); // Left
+                neighbors.push(data[i + 4]); // Right
+                neighbors.push(data[i - img.width * 4]); // Above
+                neighbors.push(data[i + img.width * 4]); // Below
+
+                // Calculate LBP value
+                var lbpValue = 0;
+                for (var j = 0; j < neighbors.length; j++) {
+                    lbpValue <<= 1;
+                    if (neighbors[j] >= center) {
+                        lbpValue |= 1;
+                    }
+                }
+
+                // Assign LBP value to the corresponding pixel in the output image
+                lbpImageData.data[i] = lbpValue;
+                lbpImageData.data[i + 1] = lbpValue;
+                lbpImageData.data[i + 2] = lbpValue;
+                lbpImageData.data[i + 3] = 255; // Alpha channel
+            }
+
+            // Put the LBP image data onto the canvas
+            ctx.putImageData(lbpImageData, 0, 0);
+        }
+        // Function to apply Blob Detection using SimpleBlobDetector
+        function applySimpleBlobDetector(ctx, img) {
+            // Convert the image to grayscale
+            var grayImg = applyBGRtoGrayscale(ctx, img);
+
+            // Apply thresholding (optional)
+            var thresholdedImg = applyBinaryThresholding(ctx, grayImg);
+
+            // Create a SimpleBlobDetector instance
+            var params = new cv.SimpleBlobDetector_Params();
+            params.filterByArea = true;
+            params.minArea = 100;
+            params.filterByCircularity = false;
+            params.filterByConvexity = false;
+            params.filterByInertia = false;
+            var detector = new cv.SimpleBlobDetector(params);
+
+            // Detect blobs
+            var keypoints = detector.detect(thresholdedImg);
+
+            // Draw keypoints on the original image
+            for (var i = 0; i < keypoints.size(); i++) {
+                var kp = keypoints.get(i);
+                ctx.beginPath();
+                ctx.arc(kp.pt.x, kp.pt.y, kp.size / 2, 0, 2 * Math.PI);
+                ctx.strokeStyle = 'red';
+                ctx.stroke();
+            }
+        }
+
+        // Function to apply MSER (Maximally Stable Extremal Regions) Blob Detection
+        function applyMSERBlobDetection(ctx, img) {
+            // Convert the image to grayscale
+            var grayImg = applyBGRtoGrayscale(ctx, img);
+
+            // Create an MSER detector
+            var mser = new cv.MSER();
+
+            // Detect MSER regions
+            var regions = new cv.MatVector();
+            mser.detectRegions(grayImg, regions);
+
+            // Draw detected regions on the original image
+            for (var i = 0; i < regions.size(); i++) {
+                var region = regions.get(i);
+                var rect = cv.boundingRect(region);
+                ctx.beginPath();
+                ctx.rect(rect.x, rect.y, rect.width, rect.height);
+                ctx.strokeStyle = 'blue';
+                ctx.stroke();
+            }
+        }
+        // Function to apply Hough Line Transform
+        function applyHoughLineTransform(ctx, img) {
+            // Convert the image to grayscale
+            var grayImg = applyBGRtoGrayscale(ctx, img);
+            
+            // Apply edge detection (e.g., using Canny)
+            var edges = applyCannyEdgeDetection(ctx, grayImg);
+            
+            // Perform Hough Line Transform
+            // Example implementation:
+            var lines = cv.HoughLinesP(edges, 1, Math.PI / 180, 50, 30, 10);
+            
+            // Draw the detected lines on the original image
+            for (var i = 0; i < lines.size(); i++) {
+                var line = lines.get(i);
+                ctx.beginPath();
+                ctx.moveTo(line.x1, line.y1);
+                ctx.lineTo(line.x2, line.y2);
+                ctx.strokeStyle = 'red';
+                ctx.stroke();
+            }
+        }
+
+        // Function to apply Hough Circle Transform
+        function applyHoughCircleTransform(ctx, img) {
+            // Convert the image to grayscale
+            var grayImg = applyBGRtoGrayscale(ctx, img);
+            
+            // Apply edge detection (e.g., using Canny)
+            var edges = applyCannyEdgeDetection(ctx, grayImg);
+            
+            // Perform Hough Circle Transform
+            // Example implementation:
+            var circles = cv.HoughCircles(edges, cv.HOUGH_GRADIENT, 1, 20, 100, 30, 1, 30);
+            
+            // Draw the detected circles on the original image
+            for (var i = 0; i < circles.size(); i++) {
+                var circle = circles.get(i);
+                ctx.beginPath();
+                ctx.arc(circle.x, circle.y, circle.radius, 0, 2 * Math.PI);
+                ctx.strokeStyle = 'blue';
+                ctx.stroke();
+            }
+        }
+
+        // Function to apply ORB Feature Detection
+        function applyORBFeatureDetection(ctx, img) {
+            // Implementation for ORB feature detection
+            // Example code to use ORB feature detection with OpenCV.js
+            const detector = new cv.ORBFastFeatureDetector();
+            const keypoints = new cv.KeyPointVector();
+            const descriptors = new cv.Mat();
+            detector.detect(img, keypoints);
+            const orb = new cv.ORB();
+            orb.compute(img, keypoints, descriptors);
+            // Draw keypoints on the image (optional)
+            const imgWithKeypoints = new cv.Mat();
+            cv.drawKeypoints(img, keypoints, imgWithKeypoints);
+            // Convert the image back to canvas context
+            cv.imshow('canvasOutput', imgWithKeypoints);
+        }
+
+        // Function to apply SIFT Feature Detection
+        function applySIFTFeatureDetection(ctx, img) {
+            // Implementation for SIFT feature detection
+            // Example code to use SIFT feature detection with OpenCV.js
+            const detector = new cv.SIFT();
+            const keypoints = new cv.KeyPointVector();
+            const descriptors = new cv.Mat();
+            detector.detect(img, keypoints);
+            detector.compute(img, keypoints, descriptors);
+            // Draw keypoints on the image (optional)
+            const imgWithKeypoints = new cv.Mat();
+            cv.drawKeypoints(img, keypoints, imgWithKeypoints);
+            // Convert the image back to canvas context
+            cv.imshow('canvasOutput', imgWithKeypoints);
+        }
+
+        // Function to apply SURF Feature Detection
+        function applySURFFeatureDetection(ctx, img) {
+            // Implementation for SURF feature detection
+            // Example code to use SURF feature detection with OpenCV.js
+            const detector = new cv.SURF();
+            const keypoints = new cv.KeyPointVector();
+            const descriptors = new cv.Mat();
+            detector.detect(img, keypoints);
+            detector.compute(img, keypoints, descriptors);
+            // Draw keypoints on the image (optional)
+            const imgWithKeypoints = new cv.Mat();
+            cv.drawKeypoints(img, keypoints, imgWithKeypoints);
+            // Convert the image back to canvas context
+            cv.imshow('canvasOutput', imgWithKeypoints);
+        }
+
+        // Function to apply Contour Detection
+        function applyContourDetection(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+
+            // Convert the image to grayscale
+            var grayscaleImageData = applyBGRtoGrayscale(ctx, img);
+            var grayscaleData = grayscaleImageData.data;
+
+            // Apply edge detection algorithm (e.g., Sobel or Canny)
+            var edgeImageData = applySobelOperator(ctx, grayscaleImageData);
+            var edgeData = edgeImageData.data;
+
+            // Find contours from the edge image
+            var contours = findContours(edgeData, edgeImageData.width, edgeImageData.height);
+
+            // Draw contours on a blank canvas
+            var contourCanvas = document.createElement('canvas');
+            contourCanvas.width = img.width;
+            contourCanvas.height = img.height;
+            var contourCtx = contourCanvas.getContext('2d');
+
+            contourCtx.strokeStyle = 'red'; // Set contour color
+            contourCtx.lineWidth = 2; // Set contour line width
+
+            for (var i = 0; i < contours.length; i++) {
+                contourCtx.beginPath();
+                contourCtx.moveTo(contours[i][0].x, contours[i][0].y);
+                for (var j = 1; j < contours[i].length; j++) {
+                    contourCtx.lineTo(contours[i][j].x, contours[i][j].y);
+                }
+                contourCtx.closePath();
+                contourCtx.stroke();
+            }
+
+            // Merge contour image with original image
+            ctx.drawImage(contourCanvas, 0, 0);
+
+            return imageData;
+        }
+
+        // Function to apply Convex Hull
+        function applyConvexHull(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+
+            // Convert the image to grayscale
+            var grayscaleImageData = applyBGRtoGrayscale(ctx, img);
+            var grayscaleData = grayscaleImageData.data;
+
+            // Apply edge detection algorithm (e.g., Sobel or Canny)
+            var edgeImageData = applySobelOperator(ctx, grayscaleImageData);
+            var edgeData = edgeImageData.data;
+
+            // Find contours from the edge image
+            var contours = findContours(edgeData, edgeImageData.width, edgeImageData.height);
+
+            // Compute convex hull for each contour
+            for (var i = 0; i < contours.length; i++) {
+                var convexHullPoints = computeConvexHull(contours[i]);
+                drawConvexHull(ctx, convexHullPoints); // Draw convex hull on original image
+            }
+
+            return imageData;
+        }
+
+
+        // Function to apply Separable Filters
+        function applySeparableFilters(ctx, img) {
+            // Example of applying a simple separable filter (e.g., Gaussian blur)
+            var sigma = 1.5; // Example standard deviation
+            var radius = Math.ceil(3 * sigma);
+            var kernelSize = radius * 2 + 1;
+            var kernel = new Float32Array(kernelSize);
+            var scale = 0;
+
+            for (var i = -radius; i <= radius; i++) {
+                var x = i * i;
+                kernel[i + radius] = Math.exp(-x / (2 * sigma * sigma));
+                scale += kernel[i + radius];
+            }
+
+            // Normalize the kernel
+            for (var j = 0; j < kernelSize; j++) {
+                kernel[j] /= scale;
+            }
+
+            // Apply the horizontal filter
+            var tempImageData = ctx.getImageData(0, 0, img.width, img.height);
+            var tempData = tempImageData.data;
+
+            for (var y = 0; y < img.height; y++) {
+                for (var x = 0; x < img.width; x++) {
+                    var sumR = 0, sumG = 0, sumB = 0;
+                    for (var k = -radius; k <= radius; k++) {
+                        var pixelX = Math.min(img.width - 1, Math.max(0, x + k));
+                        var index = (y * img.width + pixelX) * 4;
+                        var weight = kernel[k + radius];
+                        sumR += tempData[index] * weight;
+                        sumG += tempData[index + 1] * weight;
+                        sumB += tempData[index + 2] * weight;
+                    }
+                    var idx = (y * img.width + x) * 4;
+                    tempData[idx] = sumR;
+                    tempData[idx + 1] = sumG;
+                    tempData[idx + 2] = sumB;
+                }
+            }
+
+            // Apply the vertical filter
+            var resultImageData = ctx.createImageData(img.width, img.height);
+            var resultData = resultImageData.data;
+
+            for (var y = 0; y < img.height; y++) {
+                for (var x = 0; x < img.width; x++) {
+                    var sumR = 0, sumG = 0, sumB = 0;
+                    for (var k = -radius; k <= radius; k++) {
+                        var pixelY = Math.min(img.height - 1, Math.max(0, y + k));
+                        var index = (pixelY * img.width + x) * 4;
+                        var weight = kernel[k + radius];
+                        sumR += tempData[index] * weight;
+                        sumG += tempData[index + 1] * weight;
+                        sumB += tempData[index + 2] * weight;
+                    }
+                    var idx = (y * img.width + x) * 4;
+                    resultData[idx] = sumR;
+                    resultData[idx + 1] = sumG;
+                    resultData[idx + 2] = sumB;
+                    resultData[idx + 3] = 255; // Alpha channel
+                }
+            }
+
+            return resultImageData;
+        }
+
+        // Function to apply Laplacian of Gaussian (LoG)
+        function applyLaplacianOfGaussian(ctx, img) {
+            // Example of applying Laplacian of Gaussian (LoG) filter
+            var kernelSize = 5;
+            var sigma = 1.5;
+            var radius = (kernelSize - 1) / 2;
+            var kernel = new Array(kernelSize);
+
+            for (var i = 0; i < kernelSize; i++) {
+                kernel[i] = new Array(kernelSize);
+            }
+
+            var scale = 0;
+
+            for (var x = -radius; x <= radius; x++) {
+                for (var y = -radius; y <= radius; y++) {
+                    var x2 = x * x;
+                    var y2 = y * y;
+                    kernel[x + radius][y + radius] = (x2 + y2 - 2 * sigma * sigma) * Math.exp(-(x2 + y2) / (2 * sigma * sigma)) / (Math.pow(sigma, 4) * Math.PI);
+                    scale += kernel[x + radius][y + radius];
+                }
+            }
+
+            // Normalize the kernel
+            for (var i = 0; i < kernelSize; i++) {
+                for (var j = 0; j < kernelSize; j++) {
+                    kernel[i][j] /= scale;
+                }
+            }
+
+            var resultImageData = ctx.createImageData(img.width, img.height);
+            var resultData = resultImageData.data;
+            var tempImageData = ctx.getImageData(0, 0, img.width, img.height);
+            var tempData = tempImageData.data;
+
+            for (var y = radius; y < img.height - radius; y++) {
+                for (var x = radius; x < img.width - radius; x++) {
+                    var sum = 0;
+                    for (var ky = -radius; ky <= radius; ky++) {
+                        for (var kx = -radius; kx <= radius; kx++) {
+                            var weight = kernel[ky + radius][kx + radius];
+                            var index = ((y + ky) * img.width + (x + kx)) * 4;
+                            sum += tempData[index] * weight;
+                        }
+                    }
+                    var idx = (y * img.width + x) * 4;
+                    resultData[idx] = sum;
+                    resultData[idx + 1] = sum;
+                    resultData[idx + 2] = sum;
+                    resultData[idx + 3] = 255; // Alpha channel
+                }
+            }
+
+            return resultImageData;
+        }
+        // Function to apply Custom Convolution
+        function applyCustomConvolution(ctx, img) {
+            var kernel = [
+                [1, 1, 1],
+                [1, -8, 1],
+                [1, 1, 1]
+            ]; // Example kernel for edge detection
+
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+            var width = img.width;
+            var height = img.height;
+
+            var newData = new Uint8ClampedArray(data.length);
+
+            for (var y = 0; y < height; y++) {
+                for (var x = 0; x < width; x++) {
+                    var sumR = 0, sumG = 0, sumB = 0;
+                    for (var ky = -1; ky <= 1; ky++) {
+                        for (var kx = -1; kx <= 1; kx++) {
+                            var pixelY = y + ky;
+                            var pixelX = x + kx;
+                            if (pixelY >= 0 && pixelY < height && pixelX >= 0 && pixelX < width) {
+                                var kernelValue = kernel[ky + 1][kx + 1];
+                                var dataIndex = (pixelY * width + pixelX) * 4;
+                                sumR += data[dataIndex] * kernelValue;
+                                sumG += data[dataIndex + 1] * kernelValue;
+                                sumB += data[dataIndex + 2] * kernelValue;
+                            }
+                        }
+                    }
+                    var index = (y * width + x) * 4;
+                    newData[index] = sumR;
+                    newData[index + 1] = sumG;
+                    newData[index + 2] = sumB;
+                    newData[index + 3] = 255;
+                }
+            }
+
+            for (var i = 0; i < data.length; i++) {
+                data[i] = newData[i];
+            }
+
+            return imageData;
+        }        
+        // Function to apply Histogram Equalization
+        function applyHistogramEqualization(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+
+            // Compute histogram
+            var histogram = computeHistogram(data);
+
+            // Compute cumulative distribution function
+            var cdf = computeCDF(histogram);
+
+            // Apply histogram equalization
+            for (var i = 0; i < data.length; i += 4) {
+                var r = data[i];
+                var g = data[i + 1];
+                var b = data[i + 2];
+
+                data[i] = cdf[r];
+                data[i + 1] = cdf[g];
+                data[i + 2] = cdf[b];
+            }
+
+            ctx.putImageData(imageData, 0, 0);
+        }
+
+        // Function to apply Histogram Matching
+        function applyHistogramMatching(ctx, img) {
+            var referenceImage = getReferenceImage(); // Get reference image for histogram matching
+            var referenceHistogram = computeHistogram(referenceImage.data);
+            var targetHistogram = computeHistogram(img.data);
+
+            var referenceCDF = computeCDF(referenceHistogram);
+            var targetCDF = computeCDF(targetHistogram);
+
+            var mapping = [];
+            for (var i = 0; i < 256; i++) {
+                var targetIntensity = targetCDF[i];
+                var closestIntensity = findClosestIntensity(referenceCDF, targetIntensity);
+                mapping[i] = closestIntensity;
+            }
+
+            // Apply histogram matching
+            var data = img.data;
+            for (var i = 0; i < data.length; i += 4) {
+                var intensity = data[i];
+                data[i] = mapping[intensity];
+                data[i + 1] = mapping[intensity];
+                data[i + 2] = mapping[intensity];
+            }
+
+            ctx.putImageData(img, 0, 0);
+        }
+
+        // Function to convert BGR to Grayscale
+        function applyBGRtoGrayscale(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+
+            for (var i = 0; i < data.length; i += 4) {
+                var b = data[i];
+                var g = data[i + 1];
+                var r = data[i + 2];
+                var grayscale = (r + g + b) / 3;
+                data[i] = data[i + 1] = data[i + 2] = grayscale;
+            }
+
+            return imageData;
+        }
+
+        // Function to convert BGR to HSV
+        function applyBGRtoHSV(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+
+            for (var i = 0; i < data.length; i += 4) {
+                var b = data[i] / 255;
+                var g = data[i + 1] / 255;
+                var r = data[i + 2] / 255;
+
+                var cmax = Math.max(r, g, b);
+                var cmin = Math.min(r, g, b);
+                var delta = cmax - cmin;
+
+                var hue = 0;
+                if (delta != 0) {
+                    if (cmax == r) {
+                        hue = ((g - b) / delta) % 6;
+                    } else if (cmax == g) {
+                        hue = (b - r) / delta + 2;
+                    } else {
+                        hue = (r - g) / delta + 4;
+                    }
+                    hue *= 60;
+                    if (hue < 0) {
+                        hue += 360;
+                    }
+                }
+
+                var saturation = cmax == 0 ? 0 : delta / cmax;
+
+                var value = cmax;
+
+                data[i] = hue;
+                data[i + 1] = saturation * 100;
+                data[i + 2] = value * 100;
+            }
+
+            return imageData;
+        }
+
+        // Function to convert BGR to LAB
+        function applyBGRtoLAB(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+
+            for (var i = 0; i < data.length; i += 4) {
+                var b = data[i] / 255;
+                var g = data[i + 1] / 255;
+                var r = data[i + 2] / 255;
+
+                var x = 0.4124564 * r + 0.3575761 * g + 0.1804375 * b;
+                var y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b;
+                var z = 0.0193339 * r + 0.1191920 * g + 0.9503041 * b;
+
+                x /= 0.95047;
+                y /= 1.0;
+                z /= 1.08883;
+
+                x = x > 0.008856 ? Math.pow(x, 1 / 3) : 7.787037 * x + 16 / 116;
+                y = y > 0.008856 ? Math.pow(y, 1 / 3) : 7.787037 * y + 16 / 116;
+                z = z > 0.008856 ? Math.pow(z, 1 / 3) : 7.787037 * z + 16 / 116;
+
+                var l = 116 * y - 16;
+                var a = 500 * (x - y);
+                var b = 200 * (y - z);
+
+                data[i] = l;
+                data[i + 1] = a;
+                data[i + 2] = b;
+            }
+
+            return imageData;
+        }
+
+        // Function to convert BGR to XYZ
+        function applyBGRtoXYZ(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+
+            for (var i = 0; i < data.length; i += 4) {
+                var b = data[i] / 255;
+                var g = data[i + 1] / 255;
+                var r = data[i + 2] / 255;
+
+                var x = 0.4124564 * r + 0.3575761 * g + 0.1804375 * b;
+                var y = 0.2126729 * r + 0.7151522 * g + 0.0721750 * b;
+                var z = 0.0193339 * r + 0.1191920 * g + 0.9503041 * b;
+
+                data[i] = x * 100;
+                data[i + 1] = y * 100;
+                data[i + 2] = z * 100;
+            }
+
+            return imageData;
+        }
+
+        // Function to convert Grayscale to Binary
+        function applyGrayscaleToBinary(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+            var threshold = 128;
+
+            for (var i = 0; i < data.length; i += 4) {
+                var grayscale = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                var binary = grayscale > threshold ? 255 : 0;
+                data[i] = data[i + 1] = data[i + 2] = binary;
+            }
+
+            return imageData;
+        }
+
+
+        // Function to apply Erosion
+        function applyErosion(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+            var width = img.width;
+            var height = img.height;
+            var outputData = new Uint8ClampedArray(data.length);
+
+            // Loop through each pixel
+            for (var y = 0; y < height; y++) {
+                for (var x = 0; x < width; x++) {
+                    var index = (y * width + x) * 4;
+
+                    // Example implementation of erosion
+                    // Replace the pixel with the minimum value of its neighborhood
+                    var minR = 255;
+                    var minG = 255;
+                    var minB = 255;
+                    for (var dy = -1; dy <= 1; dy++) {
+                        for (var dx = -1; dx <= 1; dx++) {
+                            var neighborX = Math.min(Math.max(x + dx, 0), width - 1);
+                            var neighborY = Math.min(Math.max(y + dy, 0), height - 1);
+                            var neighborIndex = (neighborY * width + neighborX) * 4;
+                            minR = Math.min(minR, data[neighborIndex]);
+                            minG = Math.min(minG, data[neighborIndex + 1]);
+                            minB = Math.min(minB, data[neighborIndex + 2]);
+                        }
+                    }
+                    outputData[index] = minR;
+                    outputData[index + 1] = minG;
+                    outputData[index + 2] = minB;
+                    outputData[index + 3] = 255;
+                }
+            }
+
+            return new ImageData(outputData, width, height);
+        }
+
+        // Function to apply Dilation
+        function applyDilation(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+            var width = img.width;
+            var height = img.height;
+            var outputData = new Uint8ClampedArray(data.length);
+
+            // Loop through each pixel
+            for (var y = 0; y < height; y++) {
+                for (var x = 0; x < width; x++) {
+                    var index = (y * width + x) * 4;
+
+                    // Example implementation of dilation
+                    // Replace the pixel with the maximum value of its neighborhood
+                    var maxR = 0;
+                    var maxG = 0;
+                    var maxB = 0;
+                    for (var dy = -1; dy <= 1; dy++) {
+                        for (var dx = -1; dx <= 1; dx++) {
+                            var neighborX = Math.min(Math.max(x + dx, 0), width - 1);
+                            var neighborY = Math.min(Math.max(y + dy, 0), height - 1);
+                            var neighborIndex = (neighborY * width + neighborX) * 4;
+                            maxR = Math.max(maxR, data[neighborIndex]);
+                            maxG = Math.max(maxG, data[neighborIndex + 1]);
+                            maxB = Math.max(maxB, data[neighborIndex + 2]);
+                        }
+                    }
+                    outputData[index] = maxR;
+                    outputData[index + 1] = maxG;
+                    outputData[index + 2] = maxB;
+                    outputData[index + 3] = 255;
+                }
+            }
+
+            return new ImageData(outputData, width, height);
+        }
+
+        // Function to apply Opening
+        function applyOpening(ctx, img) {
+            var erodedImageData = applyErosion(ctx, img);
+            var openedImageData = applyDilation(ctx, erodedImageData);
+            return openedImageData;
+        }
+
+        // Function to apply Closing
+        function applyClosing(ctx, img) {
+            var dilatedImageData = applyDilation(ctx, img);
+            var closedImageData = applyErosion(ctx, dilatedImageData);
+            return closedImageData;
+        }
+
+        // Function to apply Morphological Gradient
+        function applyMorphologicalGradient(ctx, img) {
+            var dilatedImageData = applyDilation(ctx, img);
+            var erodedImageData = applyErosion(ctx, img);
+            var gradientImageData = ctx.createImageData(img.width, img.height);
+            var gradientData = gradientImageData.data;
+            var width = img.width;
+            var height = img.height;
+
+            // Loop through each pixel
+            for (var y = 0; y < height; y++) {
+                for (var x = 0; x < width; x++) {
+                    var index = (y * width + x) * 4;
+
+                    // Compute the difference between dilated and eroded images for each channel
+                    gradientData[index] = dilatedImageData.data[index] - erodedImageData.data[index];
+                    gradientData[index + 1] = dilatedImageData.data[index + 1] - erodedImageData.data[index + 1];
+                    gradientData[index + 2] = dilatedImageData.data[index + 2] - erodedImageData.data[index + 2];
+                    gradientData[index + 3] = 255; // Alpha channel
+                }
+            }
+
+            return gradientImageData;
+        }
+
+
+        // Function to apply Binary Thresholding
+        function applyBinaryThresholding(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+            var threshold = 128; // Adjust the threshold value as needed
+
+            for (var i = 0; i < data.length; i += 4) {
+                var gray = (data[i] + data[i + 1] + data[i + 2]) / 3; // Convert to grayscale
+                var binaryValue = gray < threshold ? 0 : 255; // Apply binary threshold
+                data[i] = data[i + 1] = data[i + 2] = binaryValue;
+            }
+
+            return imageData;
+        }
+
+        // Function to apply Adaptive Thresholding
+        function applyAdaptiveThresholding(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+            var blockSize = 3; // Adjust the block size as needed
+
+            for (var x = 0; x < img.width; x++) {
+                for (var y = 0; y < img.height; y++) {
+                    var sum = 0;
+                    var count = 0;
+                    for (var i = -blockSize; i <= blockSize; i++) {
+                        for (var j = -blockSize; j <= blockSize; j++) {
+                            var pixelIndex = (y + j) * img.width + (x + i);
+                            if (pixelIndex >= 0 && pixelIndex < data.length) {
+                                sum += data[pixelIndex * 4];
+                                count++;
+                            }
+                        }
+                    }
+                    var threshold = sum / count; // Compute local threshold
+                    var gray = (data[(y * img.width + x) * 4] + data[(y * img.width + x) * 4 + 1] + data[(y * img.width + x) * 4 + 2]) / 3;
+                    var binaryValue = gray < threshold ? 0 : 255; // Apply binary threshold
+                    data[(y * img.width + x) * 4] = data[(y * img.width + x) * 4 + 1] = data[(y * img.width + x) * 4 + 2] = binaryValue;
+                }
+            }
+
+            return imageData;
+        }
+
+        // Function to apply Otsu's Thresholding
+        function applyOtsuThresholding(ctx, img) {
+            var imageData = ctx.getImageData(0, 0, img.width, img.height);
+            var data = imageData.data;
+            var histogram = Array(256).fill(0);
+
+            // Compute histogram
+            for (var i = 0; i < data.length; i += 4) {
+                var gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                histogram[Math.round(gray)]++;
+            }
+
+            // Normalize histogram
+            var numPixels = img.width * img.height;
+            var normalizedHistogram = histogram.map(val => val / numPixels);
+
+            // Compute cumulative distribution function
+            var cumulativeSum = 0;
+            var cumulativeDistribution = normalizedHistogram.map(val => cumulativeSum += val);
+
+            // Compute global mean
+            var globalMean = normalizedHistogram.reduce((acc, val, index) => acc + (index * val), 0);
+
+            // Compute between-class variance
+            var maximumVariance = 0;
+            var threshold = 0;
+            for (var t = 0; t < 256; t++) {
+                var omega = cumulativeDistribution[t];
+                var mu = cumulativeDistribution[t] > 0 ? cumulativeSum / cumulativeDistribution[t] : 0;
+
+                var variance = Math.pow(globalMean * omega - mu, 2) / (omega * (1 - omega));
+                if (variance > maximumVariance) {
+                    maximumVariance = variance;
+                    threshold = t;
+                }
+            }
+
+            // Apply binary thresholding using Otsu's threshold
+            for (var i = 0; i < data.length; i += 4) {
+                var gray = (data[i] + data[i + 1] + data[i + 2]) / 3;
+                var binaryValue = gray < threshold ? 0 : 255;
+                data[i] = data[i + 1] = data[i + 2] = binaryValue;
+            }
+
+            return imageData;
+        }
+
+        // Function to apply Roberts Cross Operator
+        function applyRobertsCrossOperator(ctx, img) {
+            var robertsX = [
+                [1, 0],
+                [0, -1]
+            ];
+
+            var robertsY = [
+                [0, 1],
+                [-1, 0]
+            ];
+
+            var width = img.width;
+            var height = img.height;
+            var robertsImg = ctx.createImageData(width, height);
+
+            for (var y = 0; y < height - 1; y++) {
+                for (var x = 0; x < width - 1; x++) {
+                    var sumX = 0, sumY = 0;
+
+                    for (var j = 0; j <= 1; j++) {
+                        for (var i = 0; i <= 1; i++) {
+                            var pixelIndex = ((y + j) * width + (x + i)) * 4;
+                            var grayValue = img.data[pixelIndex];
+                            sumX += grayValue * robertsX[j][i];
+                            sumY += grayValue * robertsY[j][i];
+                        }
+                    }
+
+                    var index = (y * width + x) * 4;
+                    var magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
+
+                    robertsImg.data[index] = robertsImg.data[index + 1] = robertsImg.data[index + 2] = magnitude;
+                    robertsImg.data[index + 3] = 255; // Set alpha channel to fully opaque
+                }
+            }
+
+            return robertsImg;
+        }
+
+        // Function to apply Prewitt Operator
+        function applyPrewittOperator(ctx, img) {
+            var prewittX = [
+                [-1, 0, 1],
+                [-1, 0, 1],
+                [-1, 0, 1]
+            ];
+
+            var prewittY = [
+                [-1, -1, -1],
+                [0, 0, 0],
+                [1, 1, 1]
+            ];
+
+            var width = img.width;
+            var height = img.height;
+            var prewittImg = ctx.createImageData(width, height);
+
+            for (var y = 1; y < height - 1; y++) {
+                for (var x = 1; x < width - 1; x++) {
+                    var sumX = 0, sumY = 0;
+
+                    for (var j = -1; j <= 1; j++) {
+                        for (var i = -1; i <= 1; i++) {
+                            var pixelIndex = ((y + j) * width + (x + i)) * 4;
+                            var grayValue = img.data[pixelIndex];
+                            sumX += grayValue * prewittX[j + 1][i + 1];
+                            sumY += grayValue * prewittY[j + 1][i + 1];
+                        }
+                    }
+
+                    var index = (y * width + x) * 4;
+                    var magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
+
+                    prewittImg.data[index] = prewittImg.data[index + 1] = prewittImg.data[index + 2] = magnitude;
+                    prewittImg.data[index + 3] = 255; // Set alpha channel to fully opaque
+                }
+            }
+
+            return prewittImg;
+        }
+
+        // Function to apply Kirsh Operator
+        function applyKirshOperator(ctx, img) {
+            var kirshFilters = [
+                [[5, -3, -3], [5, 0, -3], [5, -3, -3]],
+                [[-3, -3, -3], [5, 0, -3], [5, 5, -3]],
+                [[-3, -3, -3], [-3, 0, -3], [5, 5, 5]],
+                [[-3, -3, -3], [-3, 0, 5], [-3, -3, 5]],
+                [[-3, -3, 5], [-3, 0, 5], [-3, -3, 5]],
+                [[-3, 5, 5], [-3, 0, 5], [-3, -3, -3]],
+                [[5, 5, 5], [-3, 0, -3], [-3, -3, -3]],
+                [[5, 5, -3], [5, 0, -3], [-3, -3, -3]]
+            ];
+
+            var width = img.width;
+            var height = img.height;
+            var kirshImg = ctx.createImageData(width, height);
+
+            for (var y = 1; y < height - 1; y++) {
+                for (var x = 1; x < width - 1; x++) {
+                    var magnitudes = [];
+
+                    for (var i = 0; i < kirshFilters.length; i++) {
+                        var sum = 0;
+
+                        for (var j = 0; j <= 2; j++) {
+                            for (var k = 0; k <= 2; k++) {
+                                var pixelIndex = ((y + j - 1) * width + (x + k - 1)) * 4;
+                                var grayValue = img.data[pixelIndex];
+                                sum += grayValue * kirshFilters[i][j][k];
+                            }
+                        }
+
+                        magnitudes.push(Math.abs(sum));
+                    }
+
+                    var index = (y * width + x) * 4;
+                    var maxMagnitude = Math.max.apply(null, magnitudes);
+
+                    kirshImg.data[index] = kirshImg.data[index + 1] = kirshImg.data[index + 2] = maxMagnitude;
+                    kirshImg.data[index + 3] = 255; // Set alpha channel to fully opaque
+                }
+            }
+
+            return kirshImg;
+        }
+
+        // Function to apply Scharr Filter
+        function applyScharrFilter(ctx, img) {
+            var scharrX = [
+                [-3, 0, 3],
+                [-10, 0, 10],
+                [-3, 0, 3]
+            ];
+
+            var scharrY = [
+                [-3, -10, -3],
+                [0, 0, 0],
+                [3, 10, 3]
+            ];
+
+            var width = img.width;
+            var height = img.height;
+            var scharrImg = ctx.createImageData(width, height);
+
+            for (var y = 1; y < height - 1; y++) {
+                for (var x = 1; x < width - 1; x++) {
+                    var sumX = 0, sumY = 0;
+
+                    for (var j = -1; j <= 1; j++) {
+                        for (var i = -1; i <= 1; i++) {
+                            var pixelIndex = ((y + j) * width + (x + i)) * 4;
+                            var grayValue = img.data[pixelIndex];
+                            sumX += grayValue * scharrX[j + 1][i + 1];
+                            sumY += grayValue * scharrY[j + 1][i + 1];
+                        }
+                    }
+
+                    var index = (y * width + x) * 4;
+                    var magnitude = Math.sqrt(sumX * sumX + sumY * sumY);
+
+                    scharrImg.data[index] = scharrImg.data[index + 1] = scharrImg.data[index + 2] = magnitude;
+                    scharrImg.data[index + 3] = 255; // Set alpha channel to fully opaque
+                }
+            }
+
+            return scharrImg;
+        }
+
+        // Function to apply Laplacian
+        function applyLaplacian(ctx, img) {
+            var laplacianFilter = [
+                [0, 1, 0],
+                [1, -4, 1],
+                [0, 1, 0]
+            ];
+
+            var width = img.width;
+            var height = img.height;
+            var laplacianImg = ctx.createImageData(width, height);
+
+            for (var y = 1; y < height - 1; y++) {
+                for (var x = 1; x < width - 1; x++) {
+                    var sum = 0;
+
+                    for (var j = -1; j <= 1; j++) {
+                        for (var i = -1; i <= 1; i++) {
+                            var pixelIndex = ((y + j) * width + (x + i)) * 4;
+                            var grayValue = img.data[pixelIndex];
+                            sum += grayValue * laplacianFilter[j + 1][i + 1];
+                        }
+                    }
+
+                    var index = (y * width + x) * 4;
+                    laplacianImg.data[index] = laplacianImg.data[index + 1] = laplacianImg.data[index + 2] = Math.abs(sum);
+                    laplacianImg.data[index + 3] = 255; // Set alpha channel to fully opaque
+                }
+            }
+
+            return laplacianImg;
+        }
+
+        // Function to apply Canny Edge Detection
+        function applyCannyEdgeDetection(ctx, img) {
+            // Convert image to grayscale
+            var grayscaleImg = ctx.createImageData(img.width, img.height);
+            for (var i = 0; i < img.data.length; i += 4) {
+                var brightness = (img.data[i] + img.data[i + 1] + img.data[i + 2]) / 3;
+                grayscaleImg.data[i] = brightness;
+                grayscaleImg.data[i + 1] = brightness;
+                grayscaleImg.data[i + 2] = brightness;
+                grayscaleImg.data[i + 3] = img.data[i + 3]; // Preserve alpha channel
+            }
+
+            // Apply Gaussian blur to reduce noise
+            var blurredImg = applyGaussianBlur(grayscaleImg);
+
+            // Apply Sobel operator to find gradient magnitude and direction
+            var sobelResult = applySobelOperator(blurredImg);
+
+            // Apply non-maximum suppression
+            var suppressedImg = applyNonMaximumSuppression(sobelResult.magnitude, sobelResult.direction);
+
+            // Apply double thresholding and edge tracking by hysteresis
+            var edgeImg = applyDoubleThresholdingAndEdgeTracking(suppressedImg);
+
+            // Draw edges onto the original canvas
+            ctx.clearRect(0, 0, ctx.canvas.width, ctx.canvas.height);
+            ctx.drawImage(edgeImg, 0, 0);
+        }
+
+        // Function to apply Sobel Operator
+        function applySobelOperator(img) {
+            var sobelX = [
+                [-1, 0, 1],
+                [-2, 0, 2],
+                [-1, 0, 1]
+            ];
+            var sobelY = [
+                [-1, -2, -1],
+                [0, 0, 0],
+                [1, 2, 1]
+            ];
+
+            var width = img.width;
+            var height = img.height;
+            var sobelImg = ctx.createImageData(width, height);
+            var magnitude = new Float32Array(width * height);
+            var direction = new Float32Array(width * height);
+
+            for (var y = 1; y < height - 1; y++) {
+                for (var x = 1; x < width - 1; x++) {
+                    var index = y * width + x;
+                    var sumX = 0, sumY = 0;
+
+                    for (var j = -1; j <= 1; j++) {
+                        for (var i = -1; i <= 1; i++) {
+                            var pixelIndex = ((y + j) * width + (x + i)) * 4;
+                            var grayValue = img.data[pixelIndex];
+                            sumX += grayValue * sobelX[j + 1][i + 1];
+                            sumY += grayValue * sobelY[j + 1][i + 1];
+                        }
+                    }
+
+                    magnitude[index] = Math.sqrt(sumX * sumX + sumY * sumY);
+                    direction[index] = Math.atan2(sumY, sumX);
+                }
+            }
+
+            // Normalize magnitude
+            var maxMagnitude = Math.max(...magnitude);
+            for (var i = 0; i < magnitude.length; i++) {
+                magnitude[i] = (magnitude[i] / maxMagnitude) * 255;
+            }
+
+            // Update sobelImg with magnitude values
+            for (var i = 0; i < sobelImg.data.length; i += 4) {
+                sobelImg.data[i] = sobelImg.data[i + 1] = sobelImg.data[i + 2] = magnitude[i / 4];
+                sobelImg.data[i + 3] = 255; // Set alpha channel to fully opaque
+            }
+
+            return { magnitude: sobelImg, direction: direction };
+        }
+
+        
+        // Function to apply Bilateral Filter
+        function applyBilateralFilter(ctx, img) {
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            const pixels = imageData.data;
+            const width = img.width;
+            const height = img.height;
+            const newData = new Uint8ClampedArray(pixels.length);
+
+            const kernelSize = 5; // Adjust kernel size as needed
+            const sigmaColor = 25; // Adjust sigma color as needed
+            const sigmaSpace = 25; // Adjust sigma space as needed
+
+            for (let i = 0; i < height; i++) {
+                for (let j = 0; j < width; j++) {
+                    const centerIndex = (i * width + j) * 4;
+                    let sumColor = 0;
+                    let sumWeight = 0;
+
+                    for (let k = -kernelSize; k <= kernelSize; k++) {
+                        for (let l = -kernelSize; l <= kernelSize; l++) {
+                            const currentI = i + k;
+                            const currentJ = j + l;
+                            if (currentI >= 0 && currentI < height && currentJ >= 0 && currentJ < width) {
+                                const currentIndex = (currentI * width + currentJ) * 4;
+                                const colorDistance = Math.abs(
+                                    (pixels[centerIndex] + pixels[centerIndex + 1] + pixels[centerIndex + 2]) / 3 -
+                                    (pixels[currentIndex] + pixels[currentIndex + 1] + pixels[currentIndex + 2]) / 3
+                                );
+                                const spatialDistance = Math.sqrt(k * k + l * l);
+                                const weight = Math.exp(-colorDistance * colorDistance / (2 * sigmaColor * sigmaColor) - spatialDistance * spatialDistance / (2 * sigmaSpace * sigmaSpace));
+                                sumColor += weight * (pixels[currentIndex] + pixels[currentIndex + 1] + pixels[currentIndex + 2]) / 3;
+                                sumWeight += weight;
+                            }
+                        }
+                    }
+
+                    newData[centerIndex] = sumColor / sumWeight;
+                    newData[centerIndex + 1] = sumColor / sumWeight;
+                    newData[centerIndex + 2] = sumColor / sumWeight;
+                    newData[centerIndex + 3] = pixels[centerIndex + 3]; // Alpha channel
+                }
+            }
+
+            ctx.putImageData(new ImageData(newData, width, height), 0, 0);
+        }
+
+        // Function to apply Box Filter
+        function applyBoxFilter(ctx, img) {
+            const imageData = ctx.getImageData(0, 0, img.width, img.height);
+            const pixels = imageData.data;
+            const width = img.width;
+            const height = img.height;
+            const newData = new Uint8ClampedArray(pixels.length);
+
+            const kernelSize = 3; // Adjust kernel size as needed
+
+            for (let i = 0; i < height; i++) {
+                for (let j = 0; j < width; j++) {
+                    const centerIndex = (i * width + j) * 4;
+                    let sumColor = [0, 0, 0];
+                    let count = 0;
+
+                    for (let k = -kernelSize; k <= kernelSize; k++) {
+                        for (let l = -kernelSize; l <= kernelSize; l++) {
+                            const currentI = i + k;
+                            const currentJ = j + l;
+                            if (currentI >= 0 && currentI < height && currentJ >= 0 && currentJ < width) {
+                                const currentIndex = (currentI * width + currentJ) * 4;
+                                sumColor[0] += pixels[currentIndex];
+                                sumColor[1] += pixels[currentIndex + 1];
+                                sumColor[2] += pixels[currentIndex + 2];
+                                count++;
+                            }
+                        }
+                    }
+
+                    newData[centerIndex] = sumColor[0] / count;
+                    newData[centerIndex + 1] = sumColor[1] / count;
+                    newData[centerIndex + 2] = sumColor[2] / count;
+                    newData[centerIndex + 3] = pixels[centerIndex + 3]; // Alpha channel
+                }
+            }
+
+            ctx.putImageData(new ImageData(newData, width, height), 0, 0);
+        }
+
+        function downloadImage() {
+            var filteredImage = document.getElementById('filteredImage');
+            var link = document.createElement('a');
+            link.href = filteredImage.src;
+            link.download = 'filtered_image.jpg';
+            link.click();
+        }
+
+        // Toggle custom resolution fields based on the selected resolution
+        document.getElementById('resolutionSelect').addEventListener('change', function() {
+            var customResolution = document.getElementById('customResolution');
+            var selectedResolution = this.value;
+            customResolution.style.display = (selectedResolution === 'custom') ? 'block' : 'none';
+        });
+
+    </script>
+</body>
+</html>
